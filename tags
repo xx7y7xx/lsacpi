@@ -1,0 +1,89 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.5.4	//
+Attrib	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	Attrib	dw	0$/;"	l
+BaseH	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	BaseH	db	0$/;"	l
+BaseL	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	BaseL	dw	0$/;"	l
+BaseM	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	BaseM	db	0$/;"	l
+CODESEL	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	CODESEL = $-gdt0			;Selector2$/;"	l
+ChangeOverStr	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	ChangeOverStr	db	"Now is in Big-real mode.$"$/;"	l
+CodeDes	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	CodeDes Descriptor	<0ffffh,,,0f98h,>$/;"	l
+DATASEL	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	DATASEL = $-gdt0			;Selector1$/;"	l
+DataDes	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	DataDes Descriptor	<0ffffh,,,0f92h,>$/;"	l
+DataES	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	DataES	dw	0$/;"	l
+DataFS	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	DataFS	dw	0$/;"	l
+DataGS	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	DataGS	dw	0$/;"	l
+Descriptor	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^Descriptor	STRUCT				;8 bytes$/;"	t
+DisableA20	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^DisableA20 proc near$/;"	l
+EDATASEL	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	EDATASEL = $-gdt0			;Selector3$/;"	l
+EDataDes	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	EDataDes Descriptor	<0ffffh,0,0,0cf92h,0>$/;"	l
+EnableA20	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^EnableA20 proc near$/;"	l
+ExitBigRealMode	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^ExitBigRealMode proc near$/;"	l
+Find_In_Off	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^unsigned short Find_In_Off = 0x0000;$/;"	v
+Find_In_Seg	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^unsigned short Find_In_Seg = 0xf000;$/;"	v
+Find_String	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^unsigned char Find_String[] = "RSD PTR ";$/;"	v
+Find_String_Size	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^unsigned int Find_String_Size = sizeof(Find_String) - 1;$/;"	v
+GDTLEN	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	GDTLEN = $-gdt0$/;"	l
+GdtPtr	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	GdtPtr	dw	GDTLEN       	 	;Load for GDTR$/;"	l
+GotoProtectedMode	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^GotoProtectedMode:$/;"	l
+HexInAL2Dec	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^HexInAL2Dec	proc	near$/;"	l
+HexInAL2Dec	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^HexInAL2Dec	proc	near$/;"	l
+HexInAX2Dec	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^HexInAX2Dec	proc	near$/;"	l
+HexInAX2Dec	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^HexInAX2Dec	proc	near$/;"	l
+Input2HexCharInBL	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^Input2HexCharInBL	proc	near$/;"	l
+Input2HexCharInBL	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^Input2HexCharInBL	proc	near$/;"	l
+JumpToBigRealMode	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^JumpToBigRealMode proc near$/;"	l
+LimitL	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	LimitL	dw	0$/;"	l
+PrintBLByBit	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintBLByBit	proc	near$/;"	l
+PrintBLByBit	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintBLByBit	proc	near$/;"	l
+PrintDLAscii	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintDLAscii	proc    near$/;"	l
+PrintDLAscii	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintDLAscii	proc    near$/;"	l
+PrintDLContent	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintDLContent	proc	near$/;"	l
+PrintDLContent	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintDLContent	proc	near$/;"	l
+PrintDLLowContent	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintDLLowContent	proc	near$/;"	l
+PrintDLLowContent	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintDLLowContent	proc	near$/;"	l
+PrintDXAscii	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintDXAscii	proc    near$/;"	l
+PrintDXAscii	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintDXAscii	proc    near$/;"	l
+PrintDXContent	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintDXContent	proc	near$/;"	l
+PrintDXContent	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintDXContent	proc	near$/;"	l
+PrintEDXAscii	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintEDXAscii	proc    near$/;"	l
+PrintEDXAscii	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintEDXAscii	proc    near$/;"	l
+PrintEDXContent	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintEDXContent	proc	near$/;"	l
+PrintEDXContent	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintEDXContent	proc	near$/;"	l
+PrintEnter	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintEnter	proc    near$/;"	l
+PrintEnter	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintEnter	proc    near$/;"	l
+PrintMEMBlock	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^void PrintMEMBlock(unsigned short Print_Block_Off, unsigned char Print_Block_Length)$/;"	f
+PrintString	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^PrintString	proc    near$/;"	l
+PrintString	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^PrintString	proc    near$/;"	l
+ProcMainCode	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^ProcMainCode:$/;"	l
+RSDP_STRUCT_LENGTH	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^int RSDP_STRUCT_LENGTH = 0x24;$/;"	v
+RSDP_STRUCT_OFF	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^unsigned short RSDP_STRUCT_OFF;$/;"	v
+ReadyToReal	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^ReadyToReal:						;Return to real address mode$/;"	l
+ReturnToReal	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^ReturnToReal:$/;"	l
+_GetBYTEContentInMEM	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^_GetBYTEContentInMEM	proc near FindInSeg:word, FindInOff:word$/;"	l
+_PrintBYTEAsciiInMEM	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^_PrintBYTEAsciiInMEM	proc near pbaim_FindInSeg:word, pbaim_FindInOff:word$/;"	l
+_PrintStringInMEM	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^_PrintStringInMEM	proc near$/;"	l
+_SearchCharInMEM	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^_SearchCharInMEM	proc near FindChar:byte, FindInSeg:word, FindInOff:word, FindLength:word$/;"	l
+_SearchStringInSegment	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^_SearchStringInSegment	proc near StringInMEMOff:word, StringCharNo:word, FindInSeg:word$/;"	l
+alpha	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^alpha:$/;"	l
+alpha	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^alpha:$/;"	l
+debug	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^void debug(void)$/;"	f
+dw	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	dw	seg   ReturnToReal$/;"	l
+found_all_chars	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^found_all_chars:$/;"	l
+gdt0	E:\ToDo\@ACPI\Tool\lsACPI\4G.inc	/^	gdt0	Descriptor   <>			;NULL$/;"	l
+input_ok	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^input_ok:$/;"	l
+input_ok	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^input_ok:$/;"	l
+loop_bit	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^loop_bit:$/;"	l
+loop_bit	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^loop_bit:$/;"	l
+main	E:\ToDo\@ACPI\Tool\lsACPI\ACPI.C	/^void main(void)$/;"	f
+next	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^next:$/;"	l
+next	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^next:$/;"	l
+ok	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^ok:$/;"	l
+ok	E:\ToDo\@ACPI\Tool\lsACPI\proc.inc	/^ok:$/;"	l
+psim_print_next_byte	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^psim_print_next_byte:$/;"	l
+scim_found_char	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^scim_found_char:$/;"	l
+ssis_find_first_char	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^ssis_find_first_char:$/;"	l
+ssis_find_next_char	E:\ToDo\@ACPI\Tool\lsACPI\ACPIi.ASM	/^ssis_find_next_char:$/;"	l
