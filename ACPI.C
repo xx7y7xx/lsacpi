@@ -14,6 +14,12 @@
  */
 extern unsigned short SearchCharInMEM(unsigned char, unsigned short, unsigned short, unsigned short);
 //extern void PrintStringInMEM(short, short, short);
+/*
+ * GetBYTEContentInMEM()
+ * Input :	Seg
+ * 		Off
+ * Output :	A BYTE of this address of the MEM.
+ */
 extern unsigned char GetBYTEContentInMEM(short, short);
 //extern void PrintBYTEAsciiInMEM(short, short);
 //extern void PrintWORDContentInMEM(short, short);
@@ -56,22 +62,71 @@ void debug(void)
 	}
 }
 
+void PrintCharRmCtrlAscii(unsigned char Byte_Content)
+{
+	if(Byte_Content<0x20)
+		printf(".");
+	else
+		printf("%c", Byte_Content);
+}
 
+void PrintMEMString(unsigned short Print_String_Seg, unsigned short Print_String_Off, unsigned short Print_String_Length)
+{
+	unsigned int Print_Off = 0x00;
+	unsigned char Byte_Content = 0x00;
+	for(; Print_Off<Print_String_Length; Print_Off++)
+	{
+		Byte_Content = GetBYTEContentInMEM(Print_String_Seg, Print_String_Off+Print_Off);
+		printf("%c", Byte_Content);
+	}
+}
 
-void PrintMEMBlock(unsigned short Print_Block_Off, unsigned char Print_Block_Length)
+void PrintMEMContent(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
+{
+	unsigned int Print_Off = 0x00;
+	unsigned char Byte_Content = 0x00;
+	for(; Print_Off<Print_Content_Length; Print_Off++)
+	{
+		Byte_Content = GetBYTEContentInMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
+		printf("%02x", Byte_Content);
+	}
+}
+
+void PrintMEMContentBigEnding(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
+{
+	unsigned int Print_Off = Print_Content_Length;
+	unsigned char Byte_Content = 0x00;
+	do
+	{
+		Print_Off--;
+		Byte_Content = GetBYTEContentInMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
+		printf("%02x", Byte_Content);
+	}
+	while(Print_Off!=0);
+}
+
+void PrintMEMBlock(unsigned short Print_Block_Seg, unsigned short Print_Block_Off, unsigned short Print_Block_Length)
 {
 	unsigned int Print_Off = 0x00;
 	unsigned char Byte_Content = 0x00;
 
-	printf("00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF\n");
-	printf("--------------------------------------------------------------------\n");
+	printf("|---------------------------------------------------------------------------|\n");
+	printf("| 0000 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF |\n");
+	printf("|---------------------------------------------------------------------------|\n");
 
 	do
 	{
+		/* Start of this line. */
+		printf("| ");
+		if(Print_Off<Print_Block_Length)
+			printf("%04x ", Print_Block_Off+Print_Off);
+		else
+			printf("     ");
+
 		/* Print ASCII code in MEM. */
 		do
 		{
-			Byte_Content = GetBYTEContentInMEM(0xf000,  Print_Block_Off+Print_Off);
+			Byte_Content = GetBYTEContentInMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
 			if(Print_Off<Print_Block_Length)
 				printf("%02x ", Byte_Content);
 			else
@@ -87,19 +142,22 @@ void PrintMEMBlock(unsigned short Print_Block_Off, unsigned char Print_Block_Len
 		/* Print the char according to the ASCII code. */
 		do
 		{
-			Byte_Content = GetBYTEContentInMEM(0xf000,  Print_Block_Off+Print_Off);
+			Byte_Content = GetBYTEContentInMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
 			if(Print_Off<Print_Block_Length)
-				printf("%c", Byte_Content);
+				//printf("%c", Byte_Content);
+				PrintCharRmCtrlAscii(Byte_Content);
 			else
 				printf(" ");
 			Print_Off++;
 		}
 		while((Print_Off%0x10)!=0);
 
-		printf("\n");
+		/* End of this line. */
+		printf(" |\n");
 	}
 	while(Print_Off!=((Print_Block_Length&0xfff0)+0x10));
 
+	printf("|---------------------------------------------------------------------------|\n");
 }
 
 
@@ -127,11 +185,10 @@ void main(void)
 
 
 
-
-
+/*====================================*/
+/* Loop to find 'RSD PTR ' in MEM. */
+/*====================================*/
 	Found_Off = 0x0000;
-
-	/* We do a loop to find 'RSD PTR ' in MEM. */
 	do
 	{
 		/* Find first char 'R' */
@@ -175,8 +232,9 @@ void main(void)
 	 */
 	RSDP_STRUCT_OFF = Found_Off - Find_String_Size;
 
-
-	/* Tell user where we found it. */
+/*====================================*/
+/* Tell user where we found it. */
+/*====================================*/
 	printf("\n\nThis routine will find string \'");
 	for(Char_No=0; Char_No<Find_String_Size; Char_No++)
 	{
@@ -196,10 +254,66 @@ void main(void)
 /* Print RSDP structure */
 /*====================================*/
 	printf("\nPrint RSDP structure.\n");
-	PrintMEMBlock(RSDP_STRUCT_OFF, RSDP_STRUCT_LENGTH);
+	PrintMEMBlock(Find_In_Seg, RSDP_STRUCT_OFF, RSDP_STRUCT_LENGTH);
+	printf("\n");
+	printf("Root System Description Pointer: %04x\n", RSDP_STRUCT_OFF);
+	printf("----------------------------------------------\n");
+
+	/* Print RSDP Signature. */
+	printf("Signature\t| ");
+	//printf("%c \n", GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF));
+	PrintMEMString(Find_In_Seg, RSDP_STRUCT_OFF, 8);
+	printf("\n");
+
+	/* Print RSDP Checksum. */
+	/* The offset&length of Checksum is define in ACPI Spec */
+	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+8);
+	printf("Checksum\t| %02x\n", Byte_Content);
+
+	/* Print RSDP OEM ID. */
+	printf("OEM ID\t\t| ");
+	PrintMEMString(Find_In_Seg, RSDP_STRUCT_OFF+9, 6);
+	printf("\n");
+
+	/* Print RSDP Revision. */
+	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+15);
+	printf("Revision\t| %02d - ACPI %d.0\n", Byte_Content, Byte_Content);
+
+	/* Print RSDP RSDT Address. */
+	printf("RSDT Address\t| ");
+	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+16, 4);
+	printf("\n");
+
+	/* Print RSDP Length. */
+	printf("Length\t\t| ");
+	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+20, 4);
+	printf("\n");
+
+	/* Print RSDP XSDT Address. */
+	printf("XsdtAddress\t| ");
+	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+24, 8);
+	printf("\n");
+
+	/* Print RSDP Extended Checksum. */
+	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+32);
+	printf("Ext Checksum\t| %02x\n", Byte_Content);
+
+	/* Print RSDP Reserved BYTEs. */
+	printf("Reserved\t| ");
+	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+33, 3);
+	printf("\n");
 
 
 
+
+
+
+
+
+
+
+//for test print memory block.
+//	PrintMEMBlock(0x0000, 0x200);
 
 
 
