@@ -5,35 +5,32 @@
 ;*******************************************************************************
 assume	cs:code
 
+;***************************************
 ; C file will invoke this function
 ;***************************************
-;public	_SearchStringInSegment
-public	_SearchCharInMEM
-;public	_PrintStringInMEM
-public	_GetBYTEContentInMEM
-;public	_PrintBYTEAsciiInMEM
-;public	_PrintWORDContentInMEM
-;public	_PrintDWORDContentInMEM
-
+public	__SearchCharIn16bitMEM
+public	__GetBYTEContentIn16bitMEM
 
 code	segment
 .386
 
-
 ;*******************************************************************************
-; Procedure:	_SearchCharInMEM
+; Procedure:	__SearchCharIn16bitMEM
 ;
 ; Description:	Search the char given by user from 0000 to FFFF in a Seg in MEM.
 ;		Output the offset of the char.
 ;
-; Input:
+; Input:	FindChar - I want to find this char, like "A", in memory.
+;		FindInSeg - Find the char in this segment.
+;		FindInOff - Find the char from this offset.
+;		FindLength - Find the char from beginning for this length.
 ;
-; Output:
+; Output:	AX - Find this char is in this offset.
 ;
-; Change:
+; Change:	None.
 ;
 ;*******************************************************************************
-_SearchCharInMEM	proc near FindChar:byte, FindInSeg:word, FindInOff:word, FindLength:word
+__SearchCharIn16bitMEM	proc near FindChar:byte, FindInSeg:word, FindInOff:word, FindLength:word
 	push	bp
 	mov	bp, sp
 
@@ -63,136 +60,10 @@ scim_found_char:
 
 ;	Return	ax
 	ret
-_SearchCharInMEM	endp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+__SearchCharIn16bitMEM	endp
 
 ;*******************************************************************************
-; Procedure:	_SearchStringInSegment
-;
-; Description:	Search the string given by user from 0000 to FFFF in a Segment. 
-;		Output the offset of the string.
-;
-; Input:	BX -	The string is saved at this Off in MEM.
-;		DX -	No of char in string.
-;		ES -	Find string in this Seg.
-;
-; Output:	AX -	The offset of the string in this Seg.
-;
-; Change:	AX, CX, DX, DI, SI.
-;
-;*******************************************************************************
-_SearchStringInSegment	proc near StringInMEMOff:word, StringCharNo:word, FindInSeg:word
-	push	bp
-	mov	bp, sp
-
-	push	cx
-	push	dx
-	push	di
-	push	si
-
-	mov	bx, StringInMEMOff
-	mov	dx, StringCharNo
-	mov	es, FindInSeg
-
-	sub	dx, 1			; No of char in string, sub 1 to ptr
-					; last char.
-	mov	al, [bx+0]		; Put the first char of the stirng in AL
-	mov	cx, 0ffffh		; repeat from 0000~ffff
-	xor	di, di			; Ptr to Off '0' of this Seg.
-
-	cld
-ssis_find_first_char:
-	repnz	scasb			; Find first char of the stirng (in AL).
-					; DI ptr to next BYTE after first char 
-					; found in this Seg,
-; Found first char of the string in MEM.
-	xor	si, si			; SI ptr to first char in string.
-ssis_find_next_char:
-	inc	di			; DI ptr to next BYTE in MEM
-	inc	si			; SI ptr to next char in string.
-	mov	ah, es:[di]
-	cmp	ah, [bx+si]
-	jne	ssis_find_first_char	; If next char is not fit, then JMP.
-
-	cmp	si, dx			; If SI ptr to last char in the string,
-					; then JMP.
-	je	found_all_chars
-	jmp	ssis_find_next_char
-
-found_all_chars:
-; Now DI ptr to last char of the string.
-; So we should sub DX, to ptr the first char.
-	sub	di, dx
-	mov	ax, di
-;	return	di			; Return DI as ptr to the string.
-
-	pop	si
-	pop	di
-	pop	dx
-	pop	cx
-
-	pop	bp
-
-	ret
-_SearchStringInSegment	endp
-
-;*******************************************************************************
-; Procedure:	_PrintStringInMEM
-;
-; Description:	Print a string in MEM, its SEg:Off is ES:DI, its length CX.
-;
-; Input:	ES:DI -	Seg:Off ptr to string in MEM
-;		CX -	No of chars in string.
-;
-; Output:	None
-;
-; Change:	DX, DI
-;
-;*******************************************************************************
-_PrintStringInMEM	proc near
-	push	dx
-	push	di
-
-; CX - Loop times, to print every char in string.
-psim_print_next_byte:
-	mov	dl, es:[di]
-	call	PrintDLAscii
-	inc	di
-	loop	psim_print_next_byte
-
-	pop	di
-	pop	dx
-
-	ret
-_PrintStringInMEM	endp
-
-;*******************************************************************************
-; Procedure:	_GetBYTEContentInMEM
+; Procedure:	__GetBYTEContentIn16bitMEM
 ;
 ; Description:	Get a BYTE's content in MEM, its SEg:Off is ES:DI.
 ;
@@ -200,10 +71,10 @@ _PrintStringInMEM	endp
 ;
 ; Output:	AL -	Return this BYTE's content.
 ;
-; Change:	DX
+; Change:	None
 ;
 ;*******************************************************************************
-_GetBYTEContentInMEM	proc near FindInSeg:word, FindInOff:word
+__GetBYTEContentIn16bitMEM	proc near FindInSeg:word, FindInOff:word
 	push	bp
 	mov	bp, sp
 
@@ -219,89 +90,8 @@ _GetBYTEContentInMEM	proc near FindInSeg:word, FindInOff:word
 
 	pop	bp
 	ret
-_GetBYTEContentInMEM	endp
+__GetBYTEContentIn16bitMEM	endp
 
-;*******************************************************************************
-; Procedure:	_PrintBYTEAsciiInMEM
-;
-; Description:	Print a BYTE's ASCII code in MEM, its SEg:Off is ES:DI.
-;
-; Input:	ES:DI -	Seg:Off ptr to BYTE in MEM
-;
-; Output:	None
-;
-; Change:	DX
-;
-;*******************************************************************************
-_PrintBYTEAsciiInMEM	proc near pbaim_FindInSeg:word, pbaim_FindInOff:word
-	push	bp
-	mov	bp, sp
-
-	push	dx
-
-	mov	es, pbaim_FindInSeg
-	mov	di, pbaim_FindInOff
-
-	mov	dl, es:[di]
-	call	PrintDLAscii
-
-	mov	al, dl
-
-	pop	dx
-
-	pop	bp
-	ret
-_PrintBYTEAsciiInMEM	endp
-
-;*******************************************************************************
-; Procedure:	_PrintWORDContentInMEM
-;
-; Description:	Print a WORD in MEM, its SEg:Off is ES:DI.
-;
-; Input:	ES:DI -	Seg:Off ptr to WORD in MEM
-;
-; Output:	None
-;
-; Change:	DX
-;
-;*******************************************************************************
-;_PrintWORDContentInMEM	proc near
-;	push	di
-;
-;	call	_PrintBYTEContentInMEM
-;	inc	di
-;	call	_PrintBYTEContentInMEM
-;
-;	pop	di
-;	ret
-;_PrintWORDContentInMEM	endp
-
-;*******************************************************************************
-; Procedure:	_PrintDWORDContentInMEM
-;
-; Description:	Print a DWORD in MEM, its SEg:Off is ES:DI.
-;
-; Input:	ES:DI -	Seg:Off ptr to DWORD in MEM
-;
-; Output:	None
-;
-; Change:	DX
-;
-;*******************************************************************************
-;_PrintDWORDContentInMEM	proc near
-;	push	di
-;
-;	call	_PrintBYTEContentInMEM
-;	inc	di
-;	call	_PrintBYTEContentInMEM
-;	inc	di
-;	call	_PrintBYTEContentInMEM
-;	inc	di
-;	call	_PrintBYTEContentInMEM
-;
-;	pop	di
-;	ret
-;_PrintDWORDContentInMEM	endp
 
 
 

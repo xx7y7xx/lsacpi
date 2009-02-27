@@ -6,40 +6,40 @@
 #include <stdio.h>
 #include <conio.h>
 
-/* Function invoke in ex7-6i.asm */
+
+/*====================================*/
+/* Function invoke in ACPIi.asm */
+/*====================================*/
 //extern short SearchStringInSegment(short, short, short);
 /*
- * SearchCharInMEM return the next BYTE of the char found in MEM. 
+ * _SearchCharIn16bitMEM return the next BYTE of the char found in MEM. 
  * If not found, return 'FFFF'
  */
-extern unsigned short SearchCharInMEM(unsigned char, unsigned short, unsigned short, unsigned short);
+extern unsigned short _SearchCharIn16bitMEM(unsigned char, unsigned short, unsigned short, unsigned short);
 //extern void PrintStringInMEM(short, short, short);
 /*
- * GetBYTEContentInMEM()
+ * _GetBYTEContentIn16bitMEM()
  * Input :	Seg
  * 		Off
  * Output :	A BYTE of this address of the MEM.
  */
-extern unsigned char GetBYTEContentInMEM(short, short);
-//extern void PrintBYTEAsciiInMEM(short, short);
-//extern void PrintWORDContentInMEM(short, short);
-//extern void PrintDWORDContentInMEM(short, short);
+extern unsigned char _GetBYTEContentIn16bitMEM(short, short);
 
 
-
-
+/*====================================*/
 /* I want to find this string in Seg:Off */
+/*====================================*/
 unsigned char Find_String[] = "RSD PTR ";
 unsigned int Find_String_Size = sizeof(Find_String) - 1;
 unsigned short Find_In_Seg = 0xf000;
 unsigned short Find_In_Off = 0x0000;
 
 
-
+/*====================================*/
 /* RSDP Structure information */
+/*====================================*/
 unsigned short RSDP_STRUCT_OFF;
 int RSDP_STRUCT_LENGTH = 0x24;
-
 
 
 /*
@@ -70,63 +70,88 @@ void PrintCharRmCtrlAscii(unsigned char Byte_Content)
 		printf("%c", Byte_Content);
 }
 
-void PrintMEMString(unsigned short Print_String_Seg, unsigned short Print_String_Off, unsigned short Print_String_Length)
+void PrintStringIn16bitMEM(unsigned short Print_String_Seg, unsigned short Print_String_Off, unsigned short Print_String_Length)
 {
 	unsigned int Print_Off = 0x00;
 	unsigned char Byte_Content = 0x00;
 	for(; Print_Off<Print_String_Length; Print_Off++)
 	{
-		Byte_Content = GetBYTEContentInMEM(Print_String_Seg, Print_String_Off+Print_Off);
+		Byte_Content = _GetBYTEContentIn16bitMEM(Print_String_Seg, Print_String_Off+Print_Off);
 		printf("%c", Byte_Content);
 	}
 }
 
-void PrintMEMContent(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
+/*
+ * PrintContentIn16bitMEMLittleEnding()
+ * Input :	Seg	Seg of Byte to print.
+ * 		Off	Off of Byte to print.
+ * 		Length	No of Byte to Print.
+ * Output :	Print Byte contents from "Seg:Off" for "Length".
+ * 		Print for LittleEnding.
+ */
+void PrintContentIn16bitMEMLittleEnding(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
 {
 	unsigned int Print_Off = 0x00;
 	unsigned char Byte_Content = 0x00;
 	for(; Print_Off<Print_Content_Length; Print_Off++)
 	{
-		Byte_Content = GetBYTEContentInMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
+		Byte_Content = _GetBYTEContentIn16bitMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
 		printf("%02x", Byte_Content);
 	}
 }
 
-void PrintMEMContentBigEnding(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
+/*
+ * PrintContentIn16bitMEMBigEnding()
+ * Input :	Seg	Seg of Byte to print.
+ * 		Off	Off of Byte to print.
+ * 		Length	No of Byte to Print.
+ *
+ * Output :	Print Byte contents from "Seg:Off" for "Length".
+ * 		Print for BigEnding.
+ *
+ * Note :	If content in MEM like this:
+ *			|--------|---------------|
+ *			|Address | 01 02 03 04 05|
+ *			|--------|---------------|
+ *			|Content | 00 01 7a 3f 00|
+ *			|--------|---------------|
+ *		Then print "003F7A0100" for BigEnding.
+ */
+void PrintContentIn16bitMEMBigEnding(unsigned short Print_Content_Seg, unsigned short Print_Content_Off, unsigned short Print_Content_Length)
 {
 	unsigned int Print_Off = Print_Content_Length;
 	unsigned char Byte_Content = 0x00;
 	do
 	{
 		Print_Off--;
-		Byte_Content = GetBYTEContentInMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
+		Byte_Content = _GetBYTEContentIn16bitMEM(Print_Content_Seg, Print_Content_Off+Print_Off);
 		printf("%02x", Byte_Content);
 	}
 	while(Print_Off!=0);
 }
 
-void PrintMEMBlock(unsigned short Print_Block_Seg, unsigned short Print_Block_Off, unsigned short Print_Block_Length)
+void PrintBlockIn16bitMEM(unsigned short Print_Block_Seg, unsigned short Print_Block_Off, unsigned short Print_Block_Length)
 {
 	unsigned int Print_Off = 0x00;
 	unsigned char Byte_Content = 0x00;
 
-	printf("|---------------------------------------------------------------------------|\n");
-	printf("| 0000 00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF |\n");
-	printf("|---------------------------------------------------------------------------|\n");
+	printf("-------------------------------------------------------------------------------\n");
+	printf("  Seg:Off  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF\n");
+	printf("-------------------------------------------------------------------------------\n");
 
 	do
 	{
 		/* Start of this line. */
-		printf("| ");
+		printf("");
 		if(Print_Off<Print_Block_Length)
-			printf("%04x ", Print_Block_Off+Print_Off);
+			printf(" %04x:%04x ", Print_Block_Seg, Print_Block_Off+Print_Off);
 		else
 			printf("     ");
 
 		/* Print ASCII code in MEM. */
 		do
 		{
-			Byte_Content = GetBYTEContentInMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
+			Byte_Content = _GetBYTEContentIn16bitMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
 			if(Print_Off<Print_Block_Length)
 				printf("%02x ", Byte_Content);
 			else
@@ -142,7 +167,7 @@ void PrintMEMBlock(unsigned short Print_Block_Seg, unsigned short Print_Block_Of
 		/* Print the char according to the ASCII code. */
 		do
 		{
-			Byte_Content = GetBYTEContentInMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
+			Byte_Content = _GetBYTEContentIn16bitMEM(Print_Block_Seg,  Print_Block_Off+Print_Off);
 			if(Print_Off<Print_Block_Length)
 				//printf("%c", Byte_Content);
 				PrintCharRmCtrlAscii(Byte_Content);
@@ -153,16 +178,17 @@ void PrintMEMBlock(unsigned short Print_Block_Seg, unsigned short Print_Block_Of
 		while((Print_Off%0x10)!=0);
 
 		/* End of this line. */
-		printf(" |\n");
+		printf("\n");
 	}
 	while(Print_Off!=((Print_Block_Length&0xfff0)+0x10));
 
-	printf("|---------------------------------------------------------------------------|\n");
+	printf("-------------------------------------------------------------------------------\n");
 }
 
 
-
-
+/*====================================*/
+/* Main */
+/*====================================*/
 void main(void)
 {
 	/* Find string from Seg:Off, for length. */
@@ -171,19 +197,9 @@ void main(void)
 	unsigned int Char_No; /* Ptr to a char in this string. */
 	unsigned char Byte_Content; /* Save a BYTE getted from MEM */
 
-
-
-
-	int temp;
-
-
-
-
 	/* I will print MEM's content from Off, for this length, using for() */
 	unsigned short Print_In_Off, Print_Length;
 	int Print_Off; /* use in for(). */
-
-
 
 /*====================================*/
 /* Loop to find 'RSD PTR ' in MEM. */
@@ -193,35 +209,35 @@ void main(void)
 	{
 		/* Find first char 'R' */
 		Find_Length = 0xffff - Find_In_Off;
-		Found_Off = SearchCharInMEM(Find_String[0], Find_In_Seg, Find_In_Off, Find_Length);
+		Found_Off = _SearchCharIn16bitMEM(Find_String[0], Find_In_Seg, Find_In_Off, Find_Length);
 	
 		if(Found_Off==0xffff)
 		{
-			printf("#Not find _SM_ ! \n");
+			printf("#Not find 'RSD PTR ' in %04x ! \n", Find_In_Seg);
 			exit(0);
 		}
 		else
 		{
 			/* Ptr to found char. */
 			Find_In_Off = Found_Off;
-			printf("#Find \'%c\', and its Off is %04x .\n", Find_String[0], Found_Off);
+			//printf("#Find \'%c\', and its Off is %04x .\n", Find_String[0], Found_Off);
 		}
 	
 		/* Find last chars 'SD PTR ' */
 		Find_Length = 1;
 		for(Char_No=1; Char_No<Find_String_Size; Char_No++)
 		{
-			Found_Off = SearchCharInMEM(Find_String[Char_No], Find_In_Seg, Find_In_Off, Find_Length);
+			Found_Off = _SearchCharIn16bitMEM(Find_String[Char_No], Find_In_Seg, Find_In_Off, Find_Length);
 			if(Found_Off==0xffff)
 			{
-				printf("#Not find \'%c\' ! \n", Find_String[Char_No]);
+				//printf("#Not find \'%c\' ! \n", Find_String[Char_No]);
 				break;
 			}
 			else
 			{
 				/* Ptr to found char. */
 				Find_In_Off = Found_Off;
-				printf("#Find \'%c\', and its Off is %04x .\n", Find_String[Char_No], Found_Off-1);
+				//printf("#Find \'%c\', and its Off is %04x .\n", Find_String[Char_No], Found_Off-1);
 			}
 		}
 	}
@@ -244,80 +260,63 @@ void main(void)
 	printf("String size: %d\n", Find_String_Size);
 	printf("Found it in offset %04x\n", RSDP_STRUCT_OFF);
 
-
-
-
-
-
-
 /*====================================*/
 /* Print RSDP structure */
 /*====================================*/
 	printf("\nPrint RSDP structure.\n");
-	PrintMEMBlock(Find_In_Seg, RSDP_STRUCT_OFF, RSDP_STRUCT_LENGTH);
+	PrintBlockIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF, RSDP_STRUCT_LENGTH);
 	printf("\n");
 	printf("Root System Description Pointer: %04x\n", RSDP_STRUCT_OFF);
 	printf("----------------------------------------------\n");
 
 	/* Print RSDP Signature. */
 	printf("Signature\t| ");
-	//printf("%c \n", GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF));
-	PrintMEMString(Find_In_Seg, RSDP_STRUCT_OFF, 8);
+	//printf("%c \n", _GetBYTEContentIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF));
+	PrintStringIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF, 8);
 	printf("\n");
 
 	/* Print RSDP Checksum. */
 	/* The offset&length of Checksum is define in ACPI Spec */
-	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+8);
+	Byte_Content = _GetBYTEContentIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF+8);
 	printf("Checksum\t| %02x\n", Byte_Content);
 
 	/* Print RSDP OEM ID. */
 	printf("OEM ID\t\t| ");
-	PrintMEMString(Find_In_Seg, RSDP_STRUCT_OFF+9, 6);
+	PrintStringIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF+9, 6);
 	printf("\n");
 
 	/* Print RSDP Revision. */
-	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+15);
+	Byte_Content = _GetBYTEContentIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF+15);
 	printf("Revision\t| %02d - ACPI %d.0\n", Byte_Content, Byte_Content);
 
 	/* Print RSDP RSDT Address. */
 	printf("RSDT Address\t| ");
-	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+16, 4);
+	PrintContentIn16bitMEMBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+16, 4);
 	printf("\n");
 
 	/* Print RSDP Length. */
 	printf("Length\t\t| ");
-	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+20, 4);
+	PrintContentIn16bitMEMBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+20, 4);
 	printf("\n");
 
 	/* Print RSDP XSDT Address. */
 	printf("XsdtAddress\t| ");
-	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+24, 8);
+	PrintContentIn16bitMEMBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+24, 8);
 	printf("\n");
 
 	/* Print RSDP Extended Checksum. */
-	Byte_Content = GetBYTEContentInMEM(Find_In_Seg, RSDP_STRUCT_OFF+32);
+	Byte_Content = _GetBYTEContentIn16bitMEM(Find_In_Seg, RSDP_STRUCT_OFF+32);
 	printf("Ext Checksum\t| %02x\n", Byte_Content);
 
 	/* Print RSDP Reserved BYTEs. */
 	printf("Reserved\t| ");
-	PrintMEMContentBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+33, 3);
+	PrintContentIn16bitMEMBigEnding(Find_In_Seg, RSDP_STRUCT_OFF+33, 3);
 	printf("\n");
 
 
 
-
-
-
-
-
-
-
-//for test print memory block.
-//	PrintMEMBlock(0x0000, 0x200);
-
-
-
-
+/*====================================*/
+/* End of this routine. */
+/*====================================*/
 	printf(".\n\nEND of routine.\n");
-//	while(bioskey(0)!=0x011b);
 }
