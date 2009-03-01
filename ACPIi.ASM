@@ -10,9 +10,54 @@ assume	cs:code
 ;***************************************
 public	__SearchCharIn16bitMEM
 public	__GetBYTEContentIn16bitMEM
+public	__Go2VideoMode80x50
+public	__Go2VideoMode80x25
 
 code	segment
 .386
+
+;*******************************************************************************
+; Procedure:	__Go2VideoMode80x50
+;
+; Description:	Go to Video mode: 80x50 to show more lines, also more contents.
+;
+; Input:	None.
+;
+; Output:	None.
+;
+; Change:	AX, BX.
+;
+;*******************************************************************************
+__Go2VideoMode80x50	proc
+	push	ax
+	push	bx
+	mov	ax, 1112h
+	xor	bl, bl
+	int	10h
+	pop	bx
+	pop	ax
+	ret
+__Go2VideoMode80x50	endp
+
+;*******************************************************************************
+; Procedure:	__Go2VideoMode80x25
+;
+; Description:	Go to Video mode: 80x50 to show more lines, also more contents.
+;
+; Input:	None.
+;
+; Output:	None.
+;
+; Change:	AX.
+;
+;*******************************************************************************
+__Go2VideoMode80x25	proc
+	push	ax
+	mov	ax, 0003h
+	int	10h
+	pop	ax
+	ret
+__Go2VideoMode80x25	endp
 
 ;*******************************************************************************
 ; Procedure:	__SearchCharIn16bitMEM

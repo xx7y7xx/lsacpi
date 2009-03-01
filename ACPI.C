@@ -25,6 +25,8 @@ extern unsigned short _SearchCharIn16bitMEM(unsigned char, unsigned short, unsig
  * Output :	A BYTE of this address of the MEM.
  */
 extern unsigned char _GetBYTEContentIn16bitMEM(short, short);
+extern void _Go2VideoMode80x50();
+extern void _Go2VideoMode80x25();
 
 
 
@@ -391,6 +393,9 @@ void main(void)
 	//printf("Found it in offset %04x\n", RSDP_STRUCT_OFF);
 
 
+	/* To show more contents, go to 80x50 video mode. */
+	_Go2VideoMode80x50();
+
 	/*===========================================================*/
 	/* Below is my beautiful interface to show every ACPI Table. */
 	/*===========================================================*/
@@ -399,7 +404,6 @@ void main(void)
 		/* At all first, paint Screen with BLACK. */
 		textbackground(BLACK);
 		clrscr();
-
 
 		/*=============================================================*/
 		/* Print the current ACPI Table's content which user selected. */
@@ -433,12 +437,11 @@ void main(void)
 		}
 		/* Press ESC */
 		if(PressKey==0x011b)
+		{
+			/* At last quit to normal 80x25 mode. */
+			_Go2VideoMode80x25();
 			exit(0);
+		}
 	}
 
-
-/*====================================*/
-/* End of this routine. */
-/*====================================*/
-	printf(".\n\nEND of routine.\n");
 }
