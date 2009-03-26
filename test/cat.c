@@ -1,10 +1,41 @@
+/*-
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Kevin Fall.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 #include <sys/param.h>
 #include <sys/stat.h>
-/* #ifndef NO_UDOM_SUPPORT
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <errno.h>
-#endif */
+#ifndef NO_UDOM_SUPPORT
+//# include <sys/socket.h>
+//# include <sys/un.h>
+# include <errno.h>
+#endif
 
 #include <ctype.h>
 //#include <err.h>
@@ -17,35 +48,18 @@
 #include <stddef.h>
 
 int bflag, eflag, nflag, sflag, tflag, vflag;
-
 int rval;
-/*---------------------------------------------------------------------------------------
- *      返回值，定??全局?量，允?被所有函?修改
- *---------------------------------------------------------------------------------------
- */
 const char *filename;
 
-/*---------------------------------------------------------------------------------------
- *      ?前正在?理的文件名，定??全局?量，避免在函????
- *---------------------------------------------------------------------------------------
- */
 static void usage(void);
 static void scanfiles(char *argv[], int cooked);
 static void cook_cat(FILE *);
 static void raw_cat(int);
 
-/*---------------------------------------------------------------------------------------
- *      函??明
- *---------------------------------------------------------------------------------------
- */
 #ifndef NO_UDOM_SUPPORT
 static int udom_open(const char *path, int flags);
 #endif
 
-/*---------------------------------------------------------------------------------------
- *      ?函?可能与NFS文件系?有?
- *---------------------------------------------------------------------------------------
- */
 int
 main(int argc, char *argv[])
 {
@@ -53,10 +67,6 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-/*---------------------------------------------------------------------------------------
- *      ?置locale，?入??""代表使用系??境?量定?的locale，例如zh_CN.eucCN
- *---------------------------------------------------------------------------------------
- */
 	while ((ch = getopt(argc, argv, "benstuv")) != -1)
 		switch (ch) {
 		case 'b':
@@ -85,11 +95,6 @@ main(int argc, char *argv[])
 		}
 	argv += optind;
 
-/*---------------------------------------------------------------------------------------
- *      使用getopt函?分析命令行??，?置??的????，???取完?后，argv指向下一??，即第一?文件
- *      的文件名。 ?是?取命令行??的?准做法，?于getopt、optind的?容??man getopt。
- *---------------------------------------------------------------------------------------
- */
 	if (bflag || eflag || nflag || sflag || tflag || vflag)
 		scanfiles(argv, 1);
 	else
@@ -100,12 +105,6 @@ main(int argc, char *argv[])
 	/* NOTREACHED */
 }
 
-/*---------------------------------------------------------------------------------------
- *      ?用scanfiles函??理??表中的所有文件，如果cat?有????，?scanfiles函?的cooked??被
- *      ?置?1（意思是需要??出?容再加工），否?cooked被?置?0。
- *      ?理完成后，???准?出，此?所有???中的?容都?被?出。注意cat的?准?出?常被重定向。
- *---------------------------------------------------------------------------------------
- */
 static void
 usage(void)
 {
@@ -114,57 +113,36 @@ usage(void)
 	/* NOTREACHED */
 }
 
-/*---------------------------------------------------------------------------------------
- *      ?出cat的用法和??，然后退出程序。
- *---------------------------------------------------------------------------------------
- */
 static void
 scanfiles(char *argv[], int cooked)
 {
-/*---------------------------------------------------------------------------------------
- *      scanfiles依次?取argv??中的每一?文件，根据???理?入的?容，然后?到?准?出。
- *---------------------------------------------------------------------------------------
- */
 	int i = 0;
 	char *path;
 	FILE *fp;
 
 	while ((path = argv[i]) != NULL || i == 0) {
-/*---------------------------------------------------------------------------------------
- *      第一种情?：argv??不?空，?遍?argv??，?argv[i]指向空串?，循??束。
- *      第二种情?：argv???空，即argv[0] == NULL，此?cat需要??准?入复制到?准?出，循?体??
- *      行一次。
- *---------------------------------------------------------------------------------------
- */
 		int fd;
 
 		if (path == NULL || strcmp(path, "-") == 0) {
+		/* b1nggou: Without INPUT file path. */
 			filename = "stdin";
 			fd = STDIN_FILENO;
-/*---------------------------------------------------------------------------------------
- *      ?path?空或"-"?，??是??准?入中?取
- *---------------------------------------------------------------------------------------
- */
 		} else {
+		/* b1nggou: With INPUT file path. */
 			filename = path;
 			fd = open(path, O_RDONLY);
-/* #ifndef NO_UDOM_SUPPORT
-			if (fd < 0 && errno == EOPNOTSUPP)
-				fd = udom_open(path, O_RDONLY);
-#endif */
+#ifndef NO_UDOM_SUPPORT
+			printf("if (fd < 0 && errno == EOPNOTSUPP) \n");
+			printf("	fd = udom_open(path, O_RDONLY); \n");
+#endif
 		}
-/*---------------------------------------------------------------------------------------
- *      否?，以只?方式打?path指定的文件，若open失?，?有可能?文件不支持open函?，??udom_open。
- *---------------------------------------------------------------------------------------
- */
+
 		if (fd < 0) {
+		/* b1nggou: open file error. */
 			printf("warn(\"%s\", path);");
 			rval = 1;
-/*---------------------------------------------------------------------------------------
- *      打?文件??，?示警告信息，?置返回值?1，程序不退出，???理下一?文件。
- *---------------------------------------------------------------------------------------
- */
 		} else if (cooked) {
+		/* b1nggou: [cooked]=1, cat.exe with para. */
 			if (fd == STDIN_FILENO)
 				cook_cat(stdin);
 			else {
@@ -177,58 +155,25 @@ scanfiles(char *argv[], int cooked)
 			if (fd != STDIN_FILENO)
 				close(fd);
 		}
-/*---------------------------------------------------------------------------------------
- *      若cat?有??，?用cook_cat?理文件，否?用raw_cat?理文件。
- *      注意到cook_cat需要?入一?文件指?，而raw_cat要求文件描述符，?何采取不同的方式？raw_cat只是
- *      ??地?入一??据，然后?出，用read和write系??用即可。而cook_cat需要一?一?地?入字符并分
- *      析?容，read和write系??用用于?理??字符，效率很低，由于C?准?IO?有??机制，故此?使用?
- *      函?能??得更好的性能。
- *      最后?要注意?准?入和其它文件必????待，不能???准?入。
- *---------------------------------------------------------------------------------------
- */
 		if (path == NULL)
 			break;
-/*---------------------------------------------------------------------------------------
- *      ?cat?有指定?入文件?，循????里退出。
- *---------------------------------------------------------------------------------------
- */
 		++i;
 	}
 }
 
-/*---------------------------------------------------------------------------------------
- *      scanfiles函?定??束。
- *---------------------------------------------------------------------------------------
- */
 
 static void
 cook_cat(FILE *fp)
 {
-/*---------------------------------------------------------------------------------------
- *      cook_cat逐字符地?入文件?容，按照??分析后再?出。
- *---------------------------------------------------------------------------------------
- */
 	int ch, gobble, line, prev;
 
 	/* Reset EOF condition on stdin. */
 	if (fp == stdin && feof(stdin))
 		clearerr(stdin);
 
-/*---------------------------------------------------------------------------------------
- *      若?准?入中含有上次?留的文件?束符，?其清除。?是可能?生的，?考??种情?："cat - 1.c -"。
- *---------------------------------------------------------------------------------------
- */
 	line = gobble = 0;
 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
-/*---------------------------------------------------------------------------------------
- *      循??入字符。
- *---------------------------------------------------------------------------------------
- */
 		if (prev == '\n') {
-/*---------------------------------------------------------------------------------------
- *      如果前一?字符是'\n'，?明?前字符ch是新行的??。
- *---------------------------------------------------------------------------------------
- */
 			if (sflag) {
 				if (ch == '\n') {
 					if (gobble)
@@ -237,40 +182,21 @@ cook_cat(FILE *fp)
 				} else
 					gobble = 0;
 			}
-/*---------------------------------------------------------------------------------------
- *      若指定了-s??，?需要?多???空行???一行。如果此?ch是'\n'（和prev一?），?明?前行是空
- *      行，再考察gobble?量。若gobble?0，?明前一行不是空行，需要?出?前的空行，此??gobble置?1；
- *      若gobble?1，?之前已?出?空行，不用再?出，于是???取下一?字符。
- *---------------------------------------------------------------------------------------
- */
 			if (nflag && (!bflag || ch != '\n')) {
 				(void)fprintf(stdout, "%6d\t", ++line);
 				if (ferror(stdout))
 					break;
 			}
-/*---------------------------------------------------------------------------------------
- *      此?，由于ch是新行的??，所以如果指定了-n或-b???，???出行?。注意-b???含了-n??，在
- *      用getopt分析命令行???已?确保?bflag?1?，nflag也?1。
- *---------------------------------------------------------------------------------------
- */
 		}
 		if (ch == '\n') {
 			if (eflag && putchar('$') == EOF)
 				break;
-/*---------------------------------------------------------------------------------------
- *      遇到?行符?，若指定了-e??，??出行?束符$，注意-e???含了-v??。
- *---------------------------------------------------------------------------------------
- */
 		} else if (ch == '\t') {
 			if (tflag) {
 				if (putchar('^') == EOF || putchar('I') == EOF)
 					break;
 				continue;
 			}
-/*---------------------------------------------------------------------------------------
- *      遇到tab字符?，若指定了-t??，??出^I，注意-t???含了-v??。
- *---------------------------------------------------------------------------------------
- */
 		} else if (vflag) {
 			if (!isascii(ch) && !isprint(ch)) {
 				if (putchar('M') == EOF || putchar('-') == EOF)
@@ -285,11 +211,6 @@ cook_cat(FILE *fp)
 				continue;
 			}
 		}
-/*---------------------------------------------------------------------------------------
- *      若指定了-v??，?按照cat手?中?明的方式?示不可打印字符和控制字符。需要特?指出，字符'\177'表
- *      示退格字符，不能直接?出，否???除前一?字符，所以?出'?'代替之。
- *---------------------------------------------------------------------------------------
- */
 		if (putchar(ch) == EOF)
 			break;
 	}
@@ -301,19 +222,10 @@ cook_cat(FILE *fp)
 	if (ferror(stdout))
 		printf("err(1, \"stdout\");");
 }
-/*---------------------------------------------------------------------------------------
- *      若?理?程中?入文件出?，?清除??，???理下一?文件；若?出文件出?，?程序?法??，此?只
- *      能退出程序。
- *---------------------------------------------------------------------------------------
- */
 
 static void
 raw_cat(int rfd)
 {
-/*---------------------------------------------------------------------------------------
- *      raw_cat一次?取一整??据，再整??出，?出前不做任何?理。
- *---------------------------------------------------------------------------------------
- */
 	int off, wfd;
 	ssize_t nr, nw;
 	static size_t bsize;
@@ -332,28 +244,13 @@ raw_cat(int rfd)
 		if ((buf = malloc(bsize)) == NULL)
 			printf("err(1, \"buffer\");");
 	}
-/*---------------------------------------------------------------------------------------
- *      用fstat函??得文件信息，st_blksize表示???文件?最合适的?大小，根据??信息分配大小最合适的
- *      ???。注意?里malloc分配的?存并?有用free函??放，可能作者?得程序退出?自?回收空?，不?放
- *      反而更具效率吧。
- *---------------------------------------------------------------------------------------
- */
-	while ((nr = read(rfd, buf, bsize)) > 0)
+	while ((nr = read(rfd, buf, bsize)) > 0) {
 		for (off = 0; nr; nr -= nw, off += nw)
 			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
 				printf("err(1, \"stdout\");");
-/*---------------------------------------------------------------------------------------
- *      ?取文件?并?入?出文件，注意?里?理write的方式，cat?有假定write能?一次性完成，因?cat并不
- *      能???准?出?被重定向到哪里。如果?准?出被重定向到一?允?中?write的位置，那么?里所做的?理
- *      就是必需的。
- *---------------------------------------------------------------------------------------
- */
+	}
 	if (nr < 0) {
 		printf("warn(\"%s\", filename);");
 		rval = 1;
 	}
 }
-/*---------------------------------------------------------------------------------------
- *      如果?生??，?打印警告信息，程序???理。
- *---------------------------------------------------------------------------------------
- */
