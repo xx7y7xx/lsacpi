@@ -32,13 +32,13 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #ifndef NO_UDOM_SUPPORT
-//# include <sys/socket.h>
-//# include <sys/un.h>
+//b1nggou	# include <sys/socket.h>
+//b1nggou	# include <sys/un.h>
 # include <errno.h>
 #endif
 
 #include <ctype.h>
-//#include <err.h>
+//b1nggou	#include <err.h>
 #include <fcntl.h>
 #include <locale.h>
 #include <stdio.h>
@@ -56,9 +56,9 @@ static void scanfiles(char *argv[], int cooked);
 static void cook_cat(FILE *);
 static void raw_cat(int);
 
-#ifndef NO_UDOM_SUPPORT
-static int udom_open(const char *path, int flags);
-#endif
+//b1nggou	#ifndef NO_UDOM_SUPPORT
+//b1nggou	static int udom_open(const char *path, int flags);
+//b1nggou	#endif
 
 int
 main(int argc, char *argv[])
@@ -108,7 +108,26 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: cat [-benstuv] [file ...]\n");
+//b1nggou	fprintf(stderr, "usage: cat [-benstuv] [file ...]\n");
+	fprintf(stderr, " ");
+	printf("\
+Concatenate FILE(s), or standard input, to standard output.\n\
+\n\
+  -A, --show-all           equivalent to -vET\n\
+  -b, --number-nonblank    number nonblank output lines\n\
+  -e                       equivalent to -vE\n\
+  -E, --show-ends          display $ at end of each line\n\
+  -n, --number             number all output lines\n\
+  -s, --squeeze-blank      never more than one single blank line\n\
+  -t                       equivalent to -vT\n\
+  -T, --show-tabs          display TAB characters as ^I\n\
+  -u                       (ignored)\n\
+  -v, --show-nonprinting   use ^ and M- notation, except for LFD and TAB\n\
+      --help               display this help and exit\n\
+      --version            output version information and exit\n\
+\n\
+With no FILE, or when FILE is -, read standard input.\n\
+");
 	exit(1);
 	/* NOTREACHED */
 }
@@ -131,10 +150,10 @@ scanfiles(char *argv[], int cooked)
 		/* b1nggou: With INPUT file path. */
 			filename = path;
 			fd = open(path, O_RDONLY);
-#ifndef NO_UDOM_SUPPORT
-			printf("if (fd < 0 && errno == EOPNOTSUPP) \n");
-			printf("	fd = udom_open(path, O_RDONLY); \n");
-#endif
+//b1nggou	#ifndef NO_UDOM_SUPPORT
+//b1nggou		if (fd < 0 && errno == EOPNOTSUPP)
+//b1nggou			fd = udom_open(path, O_RDONLY);
+//b1nggou	#endif
 		}
 
 		if (fd < 0) {
@@ -236,11 +255,11 @@ raw_cat(int rfd)
 	if (buf == NULL) {
 		if (fstat(wfd, &sbuf))
 			printf("err(1, \"%s\", filename);");
-#ifdef _MSC_VER
+//b1nggou	#ifdef _MSC_VER
 		bsize = 1024;
-#else
-//		bsize = MAX(sbuf.st_blksize, 1024);
-#endif
+//b1nggou	#else
+//b1nggou	bsize = MAX(sbuf.st_blksize, 1024);
+//b1nggou	#endif
 		if ((buf = malloc(bsize)) == NULL)
 			printf("err(1, \"buffer\");");
 	}
@@ -254,3 +273,57 @@ raw_cat(int rfd)
 		rval = 1;
 	}
 }
+
+
+//b1nggou	#ifndef NO_UDOM_SUPPORT
+//b1nggou	
+//b1nggou	static int
+//b1nggou	udom_open(const char *path, int flags)
+//b1nggou	{
+//b1nggou		struct sockaddr_un sou;
+//b1nggou		int fd;
+//b1nggou		unsigned int len;
+//b1nggou	
+//b1nggou		bzero(&sou, sizeof(sou));
+//b1nggou	
+//b1nggou		/*
+//b1nggou		 * Construct the unix domain socket address and attempt to connect
+//b1nggou		 */
+//b1nggou		fd = socket(AF_UNIX, SOCK_STREAM, 0);
+//b1nggou		if (fd >= 0) {
+//b1nggou			sou.sun_family = AF_UNIX;
+//b1nggou			if ((len = strlcpy(sou.sun_path, path,
+//b1nggou			    sizeof(sou.sun_path))) >= sizeof(sou.sun_path)) {
+//b1nggou				errno = ENAMETOOLONG;
+//b1nggou				return (-1);
+//b1nggou			}
+//b1nggou			len = offsetof(struct sockaddr_un, sun_path[len+1]);
+//b1nggou	
+//b1nggou			if (connect(fd, (void *)&sou, len) < 0) {
+//b1nggou				close(fd);
+//b1nggou				fd = -1;
+//b1nggou			}
+//b1nggou		}
+//b1nggou	
+//b1nggou		/*
+//b1nggou		 * handle the open flags by shutting down appropriate directions
+//b1nggou		 */
+//b1nggou		if (fd >= 0) {
+//b1nggou			switch(flags & O_ACCMODE) {
+//b1nggou			case O_RDONLY:
+//b1nggou				if (shutdown(fd, SHUT_WR) == -1)
+//b1nggou					warn(NULL);
+//b1nggou				break;
+//b1nggou			case O_WRONLY:
+//b1nggou				if (shutdown(fd, SHUT_RD) == -1)
+//b1nggou					warn(NULL);
+//b1nggou				break;
+//b1nggou			default:
+//b1nggou				break;
+//b1nggou			}
+//b1nggou		}
+//b1nggou		return(fd);
+//b1nggou	}
+//b1nggou	
+//b1nggou	#endif
+
