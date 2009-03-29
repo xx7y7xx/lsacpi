@@ -29,6 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+/* b1nggou: Include header files
+ * Some files commented with "b1nggou" means I cant find the header files
+ * under windows, but they can be found under BSD.
+ */
 #include <sys/param.h>
 #include <sys/stat.h>
 #ifndef NO_UDOM_SUPPORT
@@ -47,8 +51,14 @@
 #include <unistd.h>
 #include <stddef.h>
 
+/* b1nggou: The program with these paras or not. "1" means with para. */
 int bflag, eflag, nflag, sflag, tflag, vflag;
+
+/* b1nggou: Program exits with this value.
+   If sth is wrong, rval = 1.
+ */
 int rval;
+
 const char *filename;
 
 static void usage(void);
@@ -56,15 +66,25 @@ static void scanfiles(char *argv[], int cooked);
 static void cook_cat(FILE *);
 static void raw_cat(int);
 
-//b1nggou	#ifndef NO_UDOM_SUPPORT
-//b1nggou	static int udom_open(const char *path, int flags);
-//b1nggou	#endif
+/* Start-b1nggou
+#ifndef NO_UDOM_SUPPORT
+	static int udom_open(const char *path, int flags);
+#endif
+ End */
 
+/* b1nggou:
+   argc: how many paras
+   argv[0]: the first para, it is "cat.exe" or "cat".
+   argv[1]: may be "test.txt".
+   argv[2]: may be "-b" or NONE.
+ */
 int
 main(int argc, char *argv[])
 {
+	/* b1nggou: program run with these paras. */
 	int ch;
 
+	/* b1nggou: dont know what it is used for. */
 	setlocale(LC_CTYPE, "");
 
 	while ((ch = getopt(argc, argv, "benstuv")) != -1)
