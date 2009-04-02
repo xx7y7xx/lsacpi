@@ -1,11 +1,3 @@
-;*******************************************************************************
-; Filename:	4G_MEM.asm
-; Description:	This runtine is involved by lsACPI.asm
-;		Jump to big real mode.
-;*******************************************************************************
-
-;b1nggou090318	- Remove the string used to make sure we are in Big Real mode.
-
 code segment
 .586P
 ;*******************************************************************************
@@ -46,7 +38,7 @@ Descriptor	ENDS
 	GdtPtr	dw	GDTLEN       	 	;Load for GDTR
 		dd	OFFSET gdt0
 
-;b1nggou090318	- 	ChangeOverStr	db	"Now is in Big-real mode.$"
+	ChangeOverStr	db	"Now is in Big-real mode.$"
 	
 	DataES	dw	0
 	DataFS	dw	0
@@ -110,13 +102,13 @@ ReadyToReal:						;Return to real address mode
 	dw	OFFSET ReturnToReal
 	dw	seg   ReturnToReal
 ReturnToReal:
-;b1nggou090318	- push	ds
-;b1nggou090318	- push	cs
-;b1nggou090318	- pop	ds					;Just to make sure that we did it!
-;b1nggou090318	- mov	dx, OFFSET ChangeOverStr
-;b1nggou090318	- mov	ah, 9
-;b1nggou090318	- int	21h
-;b1nggou090318	- pop	ds
+	push	ds
+	push	cs
+	pop	ds					;Just to make sure that we did it!
+	mov	dx, OFFSET ChangeOverStr
+	mov	ah, 9
+	int	21h
+	pop	ds
 
 	pop	edx
 	pop	eax
