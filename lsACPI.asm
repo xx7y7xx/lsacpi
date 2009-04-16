@@ -4,6 +4,9 @@
 ;		List ACPI Tables.
 ;*******************************************************************************
 
+;=======================================
+; Include files
+;=======================================
 include	proc.inc
 include	Rd4G.inc
 include	RdMEM.inc
@@ -12,10 +15,16 @@ include	ACPI_Str.inc
 
 assume	cs:code, ds:data
 
+;=======================================
+; Equations
+;=======================================
 CR	equ	0dh
 LF	equ	0ah
 TAB	equ	09h
 
+;===============================================================================
+;===============================================================================
+;===============================================================================
 ;===============================================================================
 
 data	segment
@@ -34,6 +43,7 @@ RSDP_STRUCT_OFF		dw	0000h
 RSDP_STRUCT_START_OFF	dw	0000h
 RSDP_STRUCT_END_OFF	dw	0000h
 RSDP_STRUCT_LENGTH	dw	24h
+
 ;/*------------------------------------*/
 ;/* RSDT Structure information */
 ;/*------------------------------------*/
@@ -56,7 +66,6 @@ Print_In_Off	dw	0000h
 Print_Length	dw	0000h
 Print_Off	db	00h		; /* use in for(). */
 
-
 ;/*=============================================================*/
 ;/* Define Variables for the interface to show every ACPI Tables*/
 ;/*=============================================================*/
@@ -64,16 +73,11 @@ CurrentACPITableNo	db	01h	;/* Which ACPI Table currently I was looking at. */
 PressKey_Scan_Code	db	00h	;/* Which KEY pressed scan code. */
 PressKey_Ascii_Code	db	00h	;/* Which KEY pressed Ascii code. */
 TableAmount		db	03h	;/* The amount of all ACPI Tables found in MEM. */
-
-
-
-
-
-
-
-
 data	ends
 
+;===============================================================================
+;===============================================================================
+;===============================================================================
 ;===============================================================================
 
 code	segment
@@ -131,7 +135,6 @@ start:
 			call	PrintRSDT
 		.endif
 
-
 ;		/*=================================================*/
 ;		/* Determine which KEY user press, and what to do. */
 ;		/*=================================================*/
@@ -161,13 +164,8 @@ start:
 
 	.until	PressKey_Scan_Code==01				;/* Press ESC */
 
-
-
-
-	call	PrintEnter
-
-
 to_quit:
+	call	PrintEnter
 	;/* At last quit to normal 80x25 mode. */
 	call	Go2VideoMode80x25
 
@@ -176,6 +174,10 @@ exit:
 	int	21h
 
 ;===============================================================================
+;===============================================================================
+;===============================================================================
+;===============================================================================
+
 ;*******************************************************************************
 ; Procedure:	FindRSDPTR
 ;
@@ -278,7 +280,6 @@ PrintRSDP	proc	near
 	mov	dx, offset Memory_In16bit_Block_Line3
 	call	PrintString
 
-
 	mov	es, FIND_IN_SEG
 	mov	bx, RSDP_STRUCT_START_OFF
 
@@ -289,7 +290,6 @@ PrintRSDP	proc	near
 	; Line1: F000:B040 00 00 7A 3F 24 00 00 00 00 01 7A 3F 00 00 00 00  |  ..z?$.....z?....
 	; Line1: F000:B050 22 00 00 00 08                                   |  "....
 	.repeat	; Print 1 line per times.
-
 		;=======================
 		; Print " F000:B030 "
 		mov	dl, ' '
@@ -352,7 +352,6 @@ PrintRSDP	proc	near
 	.until	bx>RSDP_STRUCT_END_OFF
 
 	call	PrintEnter
-
 
 	;===============================
 	; Print RSDP detail infor
@@ -461,62 +460,12 @@ PrintRSDP	proc	near
 	call	PrintContentIn16bitMEMBigEnding
 	call	PrintEnter
 
-
-
-
-
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;
-;	mov	edx, '1234'
-;	call	PrintEDXAscii
-;	call	PrintEnter
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-
-
-
-
-
 	pop	si
 	pop	di
 	pop	es
 	pop	dx
 	ret
 PrintRSDP	endp
-
-
 
 ;*******************************************************************************
 ; Procedure:	PrintRSDT
@@ -534,8 +483,9 @@ PrintRSDT	proc	near
 	pushad
 	push	es
 
-	;==================
+	;===============================
 	; Get RSDT Address.
+	;===============================
 	mov	es, ds:FIND_IN_SEG
 	mov	di, ds:RSDP_STRUCT_START_OFF
 	add	di, 16d			; Off of RSDT address.
@@ -544,24 +494,19 @@ PrintRSDT	proc	near
 	add	edi, RSDT_STRUCT_LENGTH
 	mov	RSDT_STRUCT_END_OFF, edi
 
-
+	;===============================
+	; Access memory for 32bit (4GB RAM).
+	;===============================
 	call	JumpToBigRealMode
 
-;	mov	edx, dword ptr  fs:[edi]
-;	call	PrintEDXContent
-
-;
-
-
-
-
-
-	;===================
-	; Print these lines:
-	;===================
-	; Line1: -------------------------------------------------------------------------------
-	; Line2:  LineAddr  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF
-	; Line3: -------------------------------------------------------------------------------
+	;===============================
+	; Print table's header.
+	;===============================
+	; *********************************************************************************
+	; *-------------------------------------------------------------------------------*
+	; * LineAddr  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F  |  0123456789ABCDEF*
+	; *-------------------------------------------------------------------------------*
+	; *********************************************************************************
 	mov	dx, offset ds:Memory_In32bit_Block_Line1
 	call	PrintString
 	mov	dx, offset ds:Memory_In32bit_Block_Line2
@@ -571,16 +516,18 @@ PrintRSDT	proc	near
 
 	mov	ebx, ds:RSDT_STRUCT_START_OFF
 
-	;=====================================
+	;===============================
 	; Print memory in 32bit block content.
-	;=====================================
-	; Line1:  3F7A0000 52 53 44 20 50 54 52 20 7D 41 43 50 49 41 4D 00  |  RSD.PTR.}ACPIAM.
-	; Line1:  3F7A0010 00 00 7A 3F 24 00 00 00 00 01 7A 3F 00 00 00 00  |  ..z?$.....z?....
-	; Line1:  3F7A0020 22 00 00 00 08                                   |  "....
+	;===============================
+	; *********************************************************************************
+	; * 3F7A0000 52 53 44 20 50 54 52 20 7D 41 43 50 49 41 4D 00  |  RSD.PTR.}ACPIAM. *
+	; * 3F7A0010 00 00 7A 3F 24 00 00 00 00 01 7A 3F 00 00 00 00  |  ..z?$.....z?.... *
+	; * 3F7A0020 22 00 00 00 08                                   |  "....            *
+	; *********************************************************************************
 	.repeat	; Print 1 line per times.
-
 		;=======================
 		; Print "  3F7A0010 "
+		;=======================
 		mov	dx, '  '
 		call	PrintDXAscii
 		mov	edx, ebx
@@ -590,7 +537,8 @@ PrintRSDT	proc	near
 
 		xor	edi, edi			; 00h - 0Fh
 		;=======================
-		; Print ASCII code.
+		; Print ASCII code. "40"
+		;=======================
 		.repeat
 			mov	esi, ebx
 			add	esi, edi
@@ -611,8 +559,10 @@ PrintRSDT	proc	near
 		call	PrintEDXAscii
 
 		xor	edi, edi			; 00h - 0Fh
+
 		;=======================
-		; Print Char.
+		; Print Char. "A"
+		;=======================
 		.repeat
 			mov	esi, ebx
 			add	esi, edi
@@ -638,48 +588,21 @@ PrintRSDT	proc	near
 
 	call	PrintEnter
 
-
 	;===============================
 	; Print RSDP detail infor
 	;===============================
+	; To be continued...
+	; b1nggou
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	;===============================
+	; Back to 16bit memory access.
+	;===============================
 	call	ExitBigRealMode
-
 
 	pop	es
 	popad
 	ret
 PrintRSDT	endp
-
-
-
-
-
-
-
-
 
 ;===============================================================================
 ;/*
@@ -688,11 +611,6 @@ PrintRSDT	endp
 ; * press enter to jmp to the routine
 ; */
 ;debug	proc	near
-;
-;
-;
-;
-;
 ;	int key;
 ;	while(1)
 ;	{
@@ -704,7 +622,6 @@ PrintRSDT	endp
 ;		else
 ;			continue;
 ;	}
-;
 ;debug	endp
 
 code	ends
