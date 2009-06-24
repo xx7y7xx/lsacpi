@@ -22,19 +22,43 @@ CR	equ	0dh
 LF	equ	0ah
 TAB	equ	09h
 
+BIT0	equ	00000001b
+BIT1	equ	00000010b
+BIT2	equ	00000100b
+BIT3	equ	00001000b
+BIT4	equ	00010000b
+BIT5	equ	00100000b
+BIT6	equ	01000000b
+BIT7	equ	10000000b
+
 ;===============================================================================
 ;===============================================================================
 ;===============================================================================
 ;===============================================================================
 
 data	segment
+;---------------------------------------
+; Debug code
+;---------------------------------------
+Debug_Code		db	00000000b
+;				|||||||+-------- BIT0: Find "RSD PTR" in E000
+;				||||||+--------- BIT1: Find "RSD PTR" in F000
+;				|||||+---------- BIT2
+;				||||+----------- BIT3
+;				|||+------------ BIT4
+;				||+------------- BIT5
+;				|+-------------- BIT6
+;				+--------------- BIT7
+
 ;/*------------------------------------*/
 ;/* I want to find this string in Seg:Off */
 ;/*------------------------------------*/
 FIND_STRING		db	"RSD PTR $"
 FIND_STRING_SIZE	dw	08h
 FIND_STRING_ENDPTR	dw	07h
-FIND_IN_SEG		dw	0f000h;
+FIND_IN_SEG		dw	0000h
+FIND_IN_SEG_E000	dw	0e000h
+FIND_IN_SEG_F000	dw	0f000h		; 'RSD PTR ' is in E000 or F000, refer to ACPI Spec.
 
 ;/*------------------------------------*/
 ;/* RSDP Structure information */
@@ -59,7 +83,7 @@ Find_From_Off	dw	0		; Find from this offset.
 Find_Length	dw	0
 Found_Off	dw	0
 Char_No		dw	0		; /* Ptr to a char in this string, mov to DI. */
-Found_Flag	dw	0
+Found_Flag	db	0
 
 ;/* I will print MEM's content from Off, for this length, using for() */
 Print_In_Off	dw	0000h
@@ -86,17 +110,49 @@ start:
 	mov	ds, ax
 
 	;==================================================
-	; To find "RSD PTR ", and return the offset of "R".
+	; To find "RSD PTR " in Segment E000 & F000, and return the offset of "R".
+	; First find in segment E000
+	mov	dx, FIND_IN_SEG_E000
+	mov	FIND_IN_SEG, dx
+	call	FindRSDPTR
+	;=======================================
+	; FindRSDPTR return 3 value is showing below.
+	;=======================================
+	;-----------------------------------------------------------------------
+	;			|  Found	|  Not_found
+	;-----------------------|---------------|-------------------------------
+	;	Found_Off	|  1234h	|  0ffffh
+	;	Found_Flag	|  0ffh		|  00h
+	;-----------------------------------------------------------------------
+
+	.if Found_Flag==0ffh		; Find success in E000.
+		or	Debug_Code, BIT0
+		jmp	find_success
+	.elseif Found_Flag==00h		; Find faid in E000.
+		and	Debug_Code, BIT0
+	.endif
+
+	; If not find in segment E000, then in F000.
+	mov	dx, FIND_IN_SEG_F000
+	mov	FIND_IN_SEG, dx
 	call	FindRSDPTR
 
+	.if Found_Flag==00h		; Find fail in F000.
+		and	Debug_Code, BIT1
+		jmp	not_find_rsd_prt_
+	.elseif Found_Flag==0ffh	; Find success in F000.
+		or	Debug_Code, BIT1
+	.endif
+
+find_success:
 	;===============================
 	; Save RSDP address
+	;===============================
 	mov	ax, Found_Off
 	mov	RSDP_STRUCT_OFF, ax		; RSDP_STRUCT_OFF <- Found_Off
 	mov	RSDP_STRUCT_START_OFF, ax	; RSDP_STRUCT_START_OFF <- Found_OFF
 	add	ax, RSDP_STRUCT_LENGTH
 	add	RSDP_STRUCT_END_OFF, ax		; RSDP_STRUCT_END_OFF <- Found_OFF+RSDP_STRUCT_LENGTH
-
 
 	call	Go2VideoMode80x50	; Before beginning to print, go2 80x50.
 	.repeat	; to print whole window.
@@ -135,6 +191,11 @@ start:
 			call	PrintRSDT
 		.endif
 
+		;===============================================================
+		; Print Debug Code
+		;===============================================================
+		call	PrintDebugCode
+
 ;		/*=================================================*/
 ;		/* Determine which KEY user press, and what to do. */
 ;		/*=================================================*/
@@ -164,10 +225,19 @@ start:
 
 	.until	PressKey_Scan_Code==01				;/* Press ESC */
 
-to_quit:
+print_finish:
 	call	PrintEnter
 	;/* At last quit to normal 80x25 mode. */
 	call	Go2VideoMode80x25
+	jmp	exit
+
+;=======================================
+; Not find "RSD PTR ", so print not find information.
+;=======================================
+not_find_rsd_prt_:
+	mov	dx, offset Not_Find_RSD_PTR
+	call	PrintString
+	call	PrintDebugCode
 
 exit:
 	mov	ax, 4c00h
@@ -194,6 +264,11 @@ FindRSDPTR	proc	near
 	mov	ax, data
 	mov	ds, ax
 
+	;===============================
+	; Initial variable
+	;===============================
+	mov	Find_From_Off, 0000h
+
 	;/*====================================*/
 	;/* Loop to find 'RSD PTR ' in MEM.    */
 	;/*====================================*/
@@ -215,8 +290,7 @@ FindRSDPTR	proc	near
 		.if CARRY?
 			; Not found
 			;printf("#Not find 'RSD PTR ' in %04x ! \n", FIND_IN_SEG);
-			mov	Found_Off, 0ffffh	; Set
-			jmp	frsdptr_end;
+			jmp	frsdptr_not_found;
 		.else
 			; Found
 			mov	Found_Off, di		; Ptr to found char.
@@ -238,11 +312,22 @@ FindRSDPTR	proc	near
 				.break
 			.elseif	si==FIND_STRING_ENDPTR	; If .
 				; Yes, it's the last char, then set flag to Found_Off.
-				mov	Found_Flag, 0ffffh
+				mov	Found_Flag, 0ffh
 			.endif
 			inc	si
 		.endw
-	.until	Found_Flag==0ffffh
+	.until	Found_Flag==0ffh
+
+	;===============================
+	; Already find "RSD PTR ".
+	;===============================
+	; Found_Off=01234h, ptr to "RSD PTR ".
+	; Found_Flag=0ffh
+	jmp	frsdptr_end
+
+frsdptr_not_found:
+	mov	Found_Off, 0ffffh	; Set
+	mov	Found_Flag, 00h
 
 frsdptr_end:
 	ret
@@ -603,6 +688,39 @@ PrintRSDT	proc	near
 	popad
 	ret
 PrintRSDT	endp
+
+;*******************************************************************************
+; Procedure:	PrintDebugCode
+;
+; Description:	Print Debug_Code.
+;
+; Input:	None.
+;
+; Output:	None.
+;
+; Change:	.
+;
+;*******************************************************************************
+PrintDebugCode	proc	near
+	push	bx
+	push	dx
+
+	call	PrintEnter
+	mov	bl, Debug_Code
+	call	PrintBLByBit
+	call	PrintEnter
+	mov	dx, offset Debug_Code_BIT0
+	call	PrintString
+	mov	dx, offset Debug_Code_BIT1
+	call	PrintString
+	mov	dx, offset Debug_Code_BIT2
+	call	PrintString
+
+	pop	dx
+	pop	bx
+
+	ret
+PrintDebugCode	endp
 
 ;===============================================================================
 ;/*
