@@ -17,6 +17,11 @@ include	Str.inc
 
 assume	cs:code, ds:data
 
+;===============================================================================
+;===============================================================================
+;===============================================================================
+;===============================================================================
+
 ;=======================================
 ; Equations
 ;=======================================
@@ -39,9 +44,57 @@ BIT7	equ	10000000b
 ;===============================================================================
 
 data	segment
-;---------------------------------------
+;=======================================
+; I want to find this string in Seg:Off
+;=======================================
+FIND_STRING		db	"RSD PTR $"
+FIND_STRING_SIZE	dw	08h
+FIND_STRING_ENDPTR	dw	07h
+FIND_IN_SEG		dw	0000h
+FIND_IN_SEG_E000	dw	0e000h
+FIND_IN_SEG_F000	dw	0f000h		; 'RSD PTR ' is in E000 or F000, refer to ACPI Spec.
+
+;=======================================
+; RSDP Structure information
+;=======================================
+RSDP_STRUCT_OFF		dw	0000h
+RSDP_STRUCT_START_OFF	dw	0000h
+RSDP_STRUCT_END_OFF	dw	0000h
+RSDP_STRUCT_LENGTH	dw	24h
+
+;=======================================
+; RSDT Structure information
+;=======================================
+RSDT_STRUCT_START_OFF	dd	00000000h
+RSDT_STRUCT_END_OFF	dd	00000000h
+RSDT_STRUCT_LENGTH	dd	00000024h
+
+;=======================================
+; Define variables to access Memory
+;=======================================
+; Find string from Seg:Off, for length.
+Find_From_Off	dw	0		; Find from this offset.
+Find_Length	dw	0
+Found_Off	dw	0
+Char_No		dw	0		; Ptr to a char in this string, mov to DI.
+Found_Flag	db	0
+
+; I will print MEM's content from Off, for this length, using for()
+Print_In_Off	dw	0000h
+Print_Length	dw	0000h
+Print_Off	db	00h		; use in for().
+
+;=======================================
+; Define Variables for the interface to show every ACPI Tables
+;=======================================
+CurrentACPITableNo	db	01h	; Which ACPI Table currently I was looking at.
+PressKey_Scan_Code	db	00h	; Which KEY pressed scan code.
+PressKey_Ascii_Code	db	00h	; Which KEY pressed Ascii code.
+TableAmount		db	03h	; The amount of all ACPI Tables found in MEM.
+
+;=======================================
 ; Debug code
-;---------------------------------------
+;=======================================
 Debug_Code		db	00000000b
 ;				|||||||+-------- BIT0: Find "RSD PTR" in E000
 ;				||||||+--------- BIT1: Find "RSD PTR" in F000
@@ -51,54 +104,6 @@ Debug_Code		db	00000000b
 ;				||+------------- BIT5
 ;				|+-------------- BIT6
 ;				+--------------- BIT7
-
-;/*------------------------------------*/
-;/* I want to find this string in Seg:Off */
-;/*------------------------------------*/
-FIND_STRING		db	"RSD PTR $"
-FIND_STRING_SIZE	dw	08h
-FIND_STRING_ENDPTR	dw	07h
-FIND_IN_SEG		dw	0000h
-FIND_IN_SEG_E000	dw	0e000h
-FIND_IN_SEG_F000	dw	0f000h		; 'RSD PTR ' is in E000 or F000, refer to ACPI Spec.
-
-;/*------------------------------------*/
-;/* RSDP Structure information */
-;/*------------------------------------*/
-RSDP_STRUCT_OFF		dw	0000h
-RSDP_STRUCT_START_OFF	dw	0000h
-RSDP_STRUCT_END_OFF	dw	0000h
-RSDP_STRUCT_LENGTH	dw	24h
-
-;/*------------------------------------*/
-;/* RSDT Structure information */
-;/*------------------------------------*/
-RSDT_STRUCT_START_OFF	dd	00000000h
-RSDT_STRUCT_END_OFF	dd	00000000h
-RSDT_STRUCT_LENGTH	dd	00000024h
-
-;/*===================================*/
-;/* Define variables to access Memory */
-;/*===================================*/
-;/* Find string from Seg:Off, for length. */
-Find_From_Off	dw	0		; Find from this offset.
-Find_Length	dw	0
-Found_Off	dw	0
-Char_No		dw	0		; /* Ptr to a char in this string, mov to DI. */
-Found_Flag	db	0
-
-;/* I will print MEM's content from Off, for this length, using for() */
-Print_In_Off	dw	0000h
-Print_Length	dw	0000h
-Print_Off	db	00h		; /* use in for(). */
-
-;/*=============================================================*/
-;/* Define Variables for the interface to show every ACPI Tables*/
-;/*=============================================================*/
-CurrentACPITableNo	db	01h	;/* Which ACPI Table currently I was looking at. */
-PressKey_Scan_Code	db	00h	;/* Which KEY pressed scan code. */
-PressKey_Ascii_Code	db	00h	;/* Which KEY pressed Ascii code. */
-TableAmount		db	03h	;/* The amount of all ACPI Tables found in MEM. */
 data	ends
 
 ;===============================================================================
@@ -111,17 +116,14 @@ start:
 	mov	ax, data
 	mov	ds, ax
 
-	;==================================================
-	; To find "RSD PTR " in Segment E000 & F000, and return the offset of "R".
-	; First find in segment E000
+	;=======================================================================
+	; Find "RSD PTR " in Segment E000.
+	;=======================================================================
 	mov	dx, FIND_IN_SEG_E000
 	mov	FIND_IN_SEG, dx
 	call	FindRSDPTR
-	;=======================================
-	; FindRSDPTR return 3 value is showing below.
-	;=======================================
 	;-----------------------------------------------------------------------
-	;			|  Found	|  Not_found
+	;   FindRSDPTR return	|  Found	|  Not_found
 	;-----------------------|---------------|-------------------------------
 	;	Found_Off	|  1234h	|  0ffffh
 	;	Found_Flag	|  0ffh		|  00h
@@ -134,7 +136,9 @@ start:
 		and	Debug_Code, BIT0
 	.endif
 
-	; If not find in segment E000, then in F000.
+	;=======================================================================
+	; Find "RSD PTR " in Segment F000, if not find in E000.
+	;=======================================================================
 	mov	dx, FIND_IN_SEG_F000
 	mov	FIND_IN_SEG, dx
 	call	FindRSDPTR
@@ -147,9 +151,9 @@ start:
 	.endif
 
 find_success:
-	;===============================
+	;=======================================================================
 	; Save RSDP address
-	;===============================
+	;=======================================================================
 	mov	ax, Found_Off
 	mov	RSDP_STRUCT_OFF, ax		; RSDP_STRUCT_OFF <- Found_Off
 	mov	RSDP_STRUCT_START_OFF, ax	; RSDP_STRUCT_START_OFF <- Found_OFF
@@ -159,13 +163,11 @@ find_success:
 	call	Go2VideoMode80x50	; Before beginning to print, go2 80x50.
 	.repeat	; to print whole window.
 
-		;=========================
 		; Set current Page Number.
 		mov	al, 0		; Page Number = 0
 		mov	ah, 5
 		int	10h
 
-		;==============
 		; Clear screen.
 		mov	al, 0		; Roll down, '0' means whole lines.
 		mov	bh, 0fh		; Front Color: 0, Back Color: F
@@ -174,18 +176,15 @@ find_success:
 		mov	ah, 7
 		int	10h
 
-		;=========
 		; set cur.
 		mov	dx, 0000h	; (x, y) = (0, 0)
 		mov	bh, 0		; Set page NUM = 0
 		mov	ah, 2
 		int	10h
 
-		;===========================
 		; Show Labels on the header.
 		call	PrintHeaderLabels
 
-		;============================
 		; Show select Table's detail.
 		.if	CurrentACPITableNo==01
 			call	PrintRSDP
@@ -193,20 +192,19 @@ find_success:
 			call	PrintRSDT
 		.endif
 
-		;===============================================================
 		; Print Debug Code
-		;===============================================================
 		call	PrintDebugCode
 
-;		/*=================================================*/
-;		/* Determine which KEY user press, and what to do. */
-;		/*=================================================*/
-;		/* Wait for user to press LEFT or RIGHT to select. */
+		;===============================================================
+		; Determine which KEY user press, and what to do. 
+		;===============================================================
+
+		; Wait for user to press LEFT or RIGHT to select. 
 		mov	ah, 0		; Wait user press KEY.
 		int	16h
 		mov	PressKey_Scan_Code, ah			; Scan code.
 		mov	PressKey_Ascii_Code, al			; ASCII code.
-;		/* Press LEFT */
+		; Press LEFT
 		.if	PressKey_Scan_Code==4bh
 			.if	CurrentACPITableNo==1
 				mov	al, TableAmount
@@ -215,7 +213,7 @@ find_success:
 				dec	CurrentACPITableNo	; CurrentACPITableNo--
 			.endif
 		.endif
-;		/* Press RIGHT */
+		; Press RIGHT
 		.if	PressKey_Scan_Code==4dh
 			mov	al, TableAmount
 			.if	CurrentACPITableNo==al		; CurrentACPITableNo ?= TableAmount
@@ -229,13 +227,13 @@ find_success:
 
 print_finish:
 	call	PrintEnter
-	;/* At last quit to normal 80x25 mode. */
+	; At last quit to normal 80x25 mode.
 	call	Go2VideoMode80x25
 	jmp	exit
 
-;=======================================
-; Not find "RSD PTR ", so print not find information.
-;=======================================
+;===============================================================================
+; Not find "RSD PTR " in both E000&F000.
+;===============================================================================
 not_find_rsd_prt_:
 	mov	dx, offset Not_Find_RSD_PTR
 	call	PrintString
@@ -266,16 +264,14 @@ FindRSDPTR	proc	near
 	mov	ax, data
 	mov	ds, ax
 
-	;===============================
 	; Initial variable
-	;===============================
 	mov	Find_From_Off, 0000h
 
-	;/*====================================*/
-	;/* Loop to find 'RSD PTR ' in MEM.    */
-	;/*====================================*/
+	;=======================================================================
+	; Loop to find 'RSD PTR ' in MEM.
+	;=======================================================================
 	.repeat
-		;/* Find first char 'R' */
+		; Find first char 'R'
 		mov	cx, 0ffffh
 		mov	ax, Find_From_Off
 		sub	cx, ax			; Input: CX - Find the char from beginning for this length.
@@ -291,7 +287,6 @@ FindRSDPTR	proc	near
 
 		.if CARRY?
 			; Not found
-			;printf("#Not find 'RSD PTR ' in %04x ! \n", FIND_IN_SEG);
 			jmp	frsdptr_not_found;
 		.else
 			; Found
@@ -299,7 +294,6 @@ FindRSDPTR	proc	near
 			mov	Find_From_Off, di
 			inc	Find_From_Off		; Ptr to next address after the found char.
 							; Next time, find char from this offset.
-			;//printf("#Find \'%c\', and its Off is %04x .\n", FIND_STRING[0], Found_Off);
 		.endif
 
 		; Find last char "SD PTR ".
@@ -327,6 +321,9 @@ FindRSDPTR	proc	near
 	; Found_Flag=0ffh
 	jmp	frsdptr_end
 
+	;===============================
+	; Not find "RSD PTR ".
+	;===============================
 frsdptr_not_found:
 	mov	Found_Off, 0ffffh	; Set
 	mov	Found_Flag, 00h
