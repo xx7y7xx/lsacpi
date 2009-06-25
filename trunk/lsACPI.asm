@@ -13,7 +13,7 @@ include	RdMEM.inc
 include	UI.inc
 include	PrtTab.inc
 include	DBGR.inc
-include	ACPI_Str.inc
+include	Str.inc
 
 assume	cs:code, ds:data
 
