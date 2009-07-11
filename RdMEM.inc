@@ -129,13 +129,90 @@ PrintStringIn16bitMEM	endp
 
 
 ;*******************************************************************************
-; Procedure:	PrintStringIn16bitMEM
+; Procedure:	PrintContentIn16bitMEMBigEnding
 ;
 ; Description:	Print Byte contents from "Seg:Off" for "Length".
 ;		Print for BigEnding.
 ;
 ; Input:	di - Off
 ;		cx - Length
+;
+; Output:	None.
+;
+; Change:	BX, CX, DX, SI.
+;
+; * Note :	If content in MEM like this:
+; *			|--------|---------------|
+; *			|Address | 01 02 03 04 05|
+; *			|--------|---------------|
+; *			|Content | 00 01 7a 3f 00|
+; *			|--------|---------------|
+; *		Then print "003F7A0100" for BigEnding.
+;*******************************************************************************
+PrintContentIn16bitMEMBigEnding	proc	near
+	push	bx
+	push	cx
+	push	dx
+	push	si
+
+	mov	bx, di
+	mov	si, cx
+
+	.repeat
+		dec	si
+		mov	dl, es:[bx+si]
+		call	PrintDLContent
+	.until	si==0
+
+	pop	si
+	pop	dx
+	pop	cx
+	pop	bx
+	ret
+PrintContentIn16bitMEMBigEnding	endp
+
+;*******************************************************************************
+; Procedure:	PrintStringIn32bitMEM
+;
+; Description:	Print from ES:DI for the length CX.
+;
+; Input:	edi - Start Off
+;		ecx - Length
+;
+; Output:	None.
+;
+; Change:	AX, CX, DX, ES, DI.
+;
+;*******************************************************************************
+PrintStringIn32bitMEM	proc	near
+	push	eax
+	push	ecx
+	push	dx
+	push	edi
+
+	mov	eax, edi
+	add	eax, ecx		; EAX <- The end offset
+
+	.repeat
+		mov	dl, fs:[edi]
+		call	PrintDLAscii
+		inc	edi
+	.until	edi==eax
+
+	pop	edi
+	pop	dx
+	pop	ecx
+	pop	eax
+	ret	
+PrintStringIn32bitMEM	endp
+
+;*******************************************************************************
+; Procedure:	PrintStringIn32bitMEM
+;
+; Description:	Print byte contents from "Seg:Off" for "Length" by BigEnding.
+;
+; Input:	edi - Start Off
+;		ecx - Length
 ;
 ; Output:	None.
 ;
@@ -149,24 +226,27 @@ PrintStringIn16bitMEM	endp
 ; *			|--------|---------------|
 ; *		Then print "003F7A0100" for BigEnding.
 ;*******************************************************************************
-PrintContentIn16bitMEMBigEnding	proc	near
-	push	bx
-	push	cx
+PrintContentIn32bitMEMBigEnding	proc	near
+	push	ebx
+	push	ecx
+	push	dx
+	push	esi
 
-	mov	bx, di
-	mov	si, cx
+	mov	ebx, edi
+	mov	esi, ecx
 
 	.repeat
-		dec	si
-		mov	dl, es:[bx+si]
+		dec	esi
+		mov	dl, fs:[ebx+esi]
 		call	PrintDLContent
-	.until	si==0
+	.until	esi==0
 
-	pop	cx
-	pop	bx
+	pop	esi
+	pop	dx
+	pop	ecx
+	pop	ebx
 	ret
-PrintContentIn16bitMEMBigEnding	endp
-
+PrintContentIn32bitMEMBigEnding	endp
 
 ;;*******************************************************************************
 ;; Procedure:	GetBYTEContentIn32bitMEM

@@ -116,8 +116,6 @@ PrintRSDP	proc	near
 	;===============================
 	; Print RSDP detail infor
 	;===============================
-	; ES = 0F000h
-
 	mov	dx, offset ds:RSDP_String_Title
 	call	PrintString
 
@@ -131,14 +129,15 @@ PrintRSDP	proc	near
 	mov	dx, ds:RSDP_STRUCT_START_OFF
 	call	PrintDXContent
 	call	PrintEnter
-	mov	dx, offset ds:RSDP_String_Line
+	mov	dx, offset ds:Table_String_Line
 	call	PrintString
 
 	;/* Print RSDP Signature. */
 	mov	dx, offset ds:RSDP_String_Signature
 	call	PrintString
-	mov	di, ds:RSDP_STRUCT_START_OFF	; Input - RSDP_STRUCT_START_OFF+0
-	mov	cx, 8				; Input - Length 8Bytes
+	mov	es, ds:FIND_IN_SEG		; ES - Segment of RSDP table
+	mov	di, ds:RSDP_STRUCT_START_OFF	; DI - RSDP_STRUCT_START_OFF+0
+	mov	cx, 8				; CX - Length 8Bytes
 	call	PrintStringIn16bitMEM
 	call	PrintEnter	
 
@@ -154,9 +153,10 @@ PrintRSDP	proc	near
 	;/* Print RSDP OEM ID. */
 	mov	dx, offset ds:RSDP_String_OEM_ID
 	call	PrintString
+	mov	es, ds:FIND_IN_SEG		; ES - Segment of RSDP table
 	mov	di, ds:RSDP_STRUCT_START_OFF
-	add	di, 9				; Input - RSDP_STRUCT_START_OFF+9
-	mov	cx, 6				; Input - Length 6Bytes
+	add	di, 9				; DI - RSDP_STRUCT_START_OFF+9
+	mov	cx, 6				; CX - Length 6Bytes
 	call	PrintStringIn16bitMEM
 	call	PrintEnter
 
@@ -244,20 +244,27 @@ PrintRSDT	proc	near
 	push	es
 
 	;===============================
-	; Get RSDT Address.
+	; Get RSDT Start Address.
 	;===============================
 	mov	es, ds:FIND_IN_SEG
 	mov	di, ds:RSDP_STRUCT_START_OFF
 	add	di, 16d			; Off of RSDT address.
 	mov	edi, dword ptr es:[di]
 	mov	ds:RSDT_STRUCT_START_OFF, edi
-	add	edi, ds:RSDT_STRUCT_LENGTH
-	mov	ds:RSDT_STRUCT_END_OFF, edi
 
 	;===============================
 	; Access memory for 32bit (4GB RAM).
 	;===============================
 	call	JumpToBigRealMode
+
+	;===============================
+	; Get RSDT length & End Address.
+	;===============================
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	mov	ecx, fs:[edi+4]			; length of RSDT table.
+	add	edi, ecx
+	mov	ds:RSDT_STRUCT_LENGTH, ecx
+	mov	ds:RSDT_STRUCT_END_OFF, edi
 
 	;===============================
 	; Print table's header.
@@ -284,6 +291,7 @@ PrintRSDT	proc	near
 	; * 3F7A0010 00 00 7A 3F 24 00 00 00 00 01 7A 3F 00 00 00 00  |  ..z?$.....z?.... *
 	; * 3F7A0020 22 00 00 00 08                                   |  "....            *
 	; *********************************************************************************
+	; EBX - RSDT_STRUCT_START_OFF
 	.repeat	; Print 1 line per times.
 		;=======================
 		; Print "  3F7A0010 "
@@ -344,15 +352,131 @@ PrintRSDT	proc	near
 
 		add	ebx, 10h			; Print next 10Byte.
 		call	PrintEnter
-	.until	ebx>ds:RSDT_STRUCT_END_OFF
+	.until	ebx>=ds:RSDT_STRUCT_END_OFF
 
 	call	PrintEnter
 
 	;===============================
-	; Print RSDP detail infor
+	; Print RSDT detail infor
 	;===============================
-	; To be continued...
-	; b1nggou
+	mov	dx, offset ds:RSDT_String_Title
+	call	PrintString
+
+	; "Root System Description Table:"
+	mov	dx, offset ds:RSDT_String_Pointer
+	call	PrintString
+	mov	edx, ds:RSDT_STRUCT_START_OFF
+	call	PrintEDXContent
+	call	PrintEnter
+	mov	dx, offset ds:Table_String_Line
+	call	PrintString
+
+	; "RSDT Signature"
+	mov	dx, offset ds:RSDT_String_Signature
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF	; EDI - RSDT_STRUCT_START_OFF
+	mov	ecx, 4				; ECX - Signature length is 4B
+	call	PrintStringIn32bitMEM
+	call	PrintEnter
+
+	; "RSDT Length"
+	mov	dx, offset ds:RSDT_String_Length
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 4				; EDI - RSDT_STRUCT_START_OFF+4
+	mov	ecx, 4				; ECX - RSDT Length is 4Byte
+	call	PrintContentIn32bitMEMBigEnding
+	call	PrintEnter
+
+	; "RSDT Revision"
+	mov	dx, offset ds:RSDT_String_Revision
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	mov	dl, fs:[edi+8]
+	call	PrintDLContent
+	call	PrintEnter
+
+	; "RSDT Checksum"
+	mov	dx, offset ds:RSDT_String_Checksum
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	mov	dl, fs:[edi+9]
+	call	PrintDLContent
+	call	PrintEnter
+
+	; "RSDT OEM ID"
+	mov	dx, offset ds:RSDT_String_OEM_ID
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 10			; EDI - RSDT_STRUCT_START_OFF+10
+	mov	ecx, 6			; ECX - length is 6B
+	call	PrintStringIn32bitMEM
+	call	PrintEnter
+
+	; "RSDT OEM Table ID"
+	mov	dx, offset ds:RSDT_String_OEM_Table_ID
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 16			; EDI - RSDT_STRUCT_START_OFF+16
+	mov	ecx, 8			; ECX - length is 8B
+	call	PrintStringIn32bitMEM
+	call	PrintEnter
+
+	; "RSDT OEM Revision"
+	mov	dx, offset ds:RSDT_String_OEM_Revision
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 24			; EDI - RSDT_STRUCT_START_OFF+24
+	mov	ecx, 4			; ECX - Length is 4Byte
+	call	PrintContentIn32bitMEMBigEnding
+	call	PrintEnter
+
+	; "RSDT Creator ID"
+	mov	dx, offset ds:RSDT_String_Creator_ID
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 28			; EDI - RSDT_STRUCT_START_OFF+28
+	mov	ecx, 4			; ECX - length is 4B
+	call	PrintStringIn32bitMEM
+	call	PrintEnter
+
+	; "RSDT Creator Revision"
+	mov	dx, offset ds:RSDT_String_Creator_Revision
+	call	PrintString
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 32			; EDI - RSDT_STRUCT_START_OFF+32
+	mov	ecx, 4			; ECX - Length is 4Byte
+	call	PrintContentIn32bitMEMBigEnding
+	call	PrintEnter
+
+	; ==== "RSDT Entry0~10" Start ==== ;
+	xor	cx, cx
+	mov	edi, ds:RSDT_STRUCT_START_OFF
+	add	edi, 36			; ptr to "Entry0".
+	.repeat	; One Entry per line.
+		mov	dx, offset ds:RSDT_String_Entry1
+		call	PrintString	; "Entry"
+		mov	dx, cx
+		call	PrintDLContent	; the number of this Entry, e.g."0"
+		mov	dx, offset ds:RSDT_String_Entry2
+		call	PrintString	; "		| "
+
+		mov	edx, fs:[edi]
+		call	PrintEDXContent
+		call	PrintEnter
+		add	edi, 4		; ptr to next Entry.
+	.until	edi>=ds:RSDT_STRUCT_END_OFF
+
+
+;	mov	edi, ds:RSDT_STRUCT_START_OFF
+;	add	edi, 36			; EDI - RSDT_STRUCT_START_OFF+36
+;	mov	ecx, 4			; ECX - Length is 4Byte
+;	call	PrintContentIn32bitMEMBigEnding
+;	call	PrintEnter
+
+
+
+	; ==== "RSDT Entry0~10" End ==== ;
 
 	;===============================
 	; Back to 16bit memory access.
