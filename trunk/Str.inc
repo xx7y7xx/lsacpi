@@ -21,6 +21,8 @@ RSDT_Label_String_Sel	db	'(RSDT)$'
 FACP_Label_String	db	' FACP $'
 FACP_Label_String_Sel	db	'(FACP)$'
 
+Table_String_Line	db	'----------------------------------------------', CR, LF, '$'
+
 ;===============================================================================
 ; RSDP table content
 ;===============================================================================
@@ -37,7 +39,6 @@ Memory_In16bit_Block_Line3	db	'-------------------------------------------------
 ;=======================================
 RSDP_String_Title		db	'RSDP Structure', CR, LF, '$'
 RSDP_String_Pointer		db	'Root System Description Pointer: $'
-RSDP_String_Line		db	'----------------------------------------------', CR, LF, '$'
 RSDP_String_Signature		db	'Signature', TAB, '| $'
 RSDP_String_Checksum		db	'Checksum', TAB, '| $'
 RSDP_String_OEM_ID		db	'OEM ID', TAB, TAB, '| $'
@@ -66,25 +67,15 @@ Memory_In32bit_Block_Line3	db	'-------------------------------------------------
 ;=======================================
 RSDT_String_Title		db	'RSDT Structure', CR, LF, '$'
 RSDT_String_Pointer		db	'Root System Description Table: $'
-RSDT_String_Line		db	'----------------------------------------------', CR, LF, '$'
 RSDT_String_Signature		db	'Signature', TAB, '| $'
-RSDT_String_Length		db	'Length', TAB, '| $'
+RSDT_String_Length		db	'Length', TAB, TAB, '| $'
 RSDT_String_Revision		db	'Revision', TAB, '| $'
 RSDT_String_Checksum		db	'Checksum', TAB, '| $'
-RSDT_String_OEM_ID		db	'OEM ID', TAB, '| $'
+RSDT_String_OEM_ID		db	'OEM ID', TAB, TAB, '| $'
 RSDT_String_OEM_Table_ID	db	'OEM Table ID', TAB, '| $'
 RSDT_String_OEM_Revision	db	'OEM Revision', TAB, '| $'
 RSDT_String_Creator_ID		db	'Creator ID', TAB, '| $'
-RSDT_String_Creator_Revision	db	'Creator Revision', TAB, '| $'
-RSDT_String_Entry0		db	'Entry0', TAB, '| $'
-RSDT_String_Entry1		db	'Entry1', TAB, '| $'
-RSDT_String_Entry2		db	'Entry2', TAB, '| $'
-RSDT_String_Entry3		db	'Entry3', TAB, '| $'
-RSDT_String_Entry4		db	'Entry4', TAB, '| $'
-RSDT_String_Entry5		db	'Entry5', TAB, '| $'
-RSDT_String_Entry6		db	'Entry6', TAB, '| $'
-RSDT_String_Entry7		db	'Entry7', TAB, '| $'
-RSDT_String_Entry8		db	'Entry8', TAB, '| $'
-RSDT_String_Entry9		db	'Entry9', TAB, '| $'
-RSDT_String_Entry10		db	'Entry10', TAB, '| $'
+RSDT_String_Creator_Revision	db	'Creator Revision', '| $'
+RSDT_String_Entry1		db	'Entry$'
+RSDT_String_Entry2		db	TAB, TAB, '| $'
 data	ends

@@ -67,7 +67,7 @@ RSDP_STRUCT_LENGTH	dw	24h
 ;=======================================
 RSDT_STRUCT_START_OFF	dd	00000000h
 RSDT_STRUCT_END_OFF	dd	00000000h
-RSDT_STRUCT_LENGTH	dd	00000024h
+RSDT_STRUCT_LENGTH	dd	00000000h	; get length in [RSDT+4]
 
 ;=======================================
 ; Define variables to access Memory
@@ -145,7 +145,7 @@ start:
 
 	.if Found_Flag==00h		; Find fail in F000.
 		and	Debug_Code, BIT1
-		jmp	not_find_rsd_prt_
+		jmp	not_find_rsd_ptr_
 	.elseif Found_Flag==0ffh	; Find success in F000.
 		or	Debug_Code, BIT1
 	.endif
@@ -234,7 +234,7 @@ print_finish:
 ;===============================================================================
 ; Not find "RSD PTR " in both E000&F000.
 ;===============================================================================
-not_find_rsd_prt_:
+not_find_rsd_ptr_:
 	mov	dx, offset Not_Find_RSD_PTR
 	call	PrintString
 	call	PrintDebugCode
